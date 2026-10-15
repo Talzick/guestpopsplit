@@ -24,7 +24,7 @@ require_relative "lib/guest_cta/engine"
 # With use_new_show_route the location is the plugin name: the sidebar link goes
 # to /admin/plugins/<location>, which core resolves to a plugin by name. The
 # Popup/Banner pages live under it (see guest-cta-ab-route-map.js).
-add_admin_route "guest_cta.admin.title", PLUGIN_NAME, use_new_show_route: true
+add_admin_route "guest_cta.admin.title", ::GuestCta::PLUGIN_NAME, use_new_show_route: true
 
 after_initialize do
   Discourse::Application.routes.append { mount ::GuestCta::Engine, at: "/guest-cta" }
