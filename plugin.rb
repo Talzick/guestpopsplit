@@ -27,7 +27,25 @@ require_relative "lib/guest_cta/engine"
 add_admin_route "guest_cta.admin.title", ::GuestCta::PLUGIN_NAME, use_new_show_route: true
 
 after_initialize do
-  Discourse::Application.routes.append { mount ::GuestCta::Engine, at: "/guest-cta" }
+  # Core only serves /admin/plugins/:plugin_id and /settings itself. In-app
+  # navigation to the Popup and Banner pages needs nothing more, but a refresh
+  # or a direct link is a full request, so Rails must know those paths too.
+  # Both the plugin name and its install directory are valid ids.
+  admin_page_ids = Regexp.union([name, directory_name].uniq.map { |id| Regexp.escape(id) })
+
+  Discourse::Application.routes.append do
+    mount ::GuestCta::Engine, at: "/guest-cta"
+
+    scope constraints: StaffConstraint.new do
+      %w[popup banner].each do |page|
+        get "admin/plugins/:plugin_id/#{page}",
+            to: "admin/plugins#show",
+            constraints: {
+              plugin_id: admin_page_ids,
+            }
+      end
+    end
+  end
 
   # Logged-out visitors get the live popup config preloaded with the rest of the
   # site data, so no extra request is needed before the popup can show.

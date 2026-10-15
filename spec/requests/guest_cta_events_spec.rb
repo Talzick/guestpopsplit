@@ -110,6 +110,18 @@ RSpec.describe "Guest CTA admin dashboard" do
     expect(response.parsed_body["popup"]["current_test"]["status"]).to eq("draft")
   end
 
+  it "serves the app shell for direct requests to the admin pages" do
+    get "/admin/plugins/discourse-guest-cta-ab/banner"
+    expect(response.status).to eq(200)
+    expect(response.media_type).to eq("text/html")
+
+    get "/admin/plugins/discourse-guest-cta-ab/popup"
+    expect(response.status).to eq(200)
+
+    get "/admin/plugins/discourse-guest-cta-ab/other"
+    expect(response.status).to eq(404)
+  end
+
   it "hides the overview from non-admins" do
     sign_in(Fabricate(:moderator))
     get "/guest-cta/admin/overview.json"
