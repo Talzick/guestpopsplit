@@ -18,6 +18,24 @@ module GuestCta
       }
     end
 
+    # Both placements at a glance: whether each is switched on, the current
+    # version's numbers, and the draft/running test with its results.
+    def self.overview
+      Variant::PLACEMENTS.each_with_object({}) do |placement, result|
+        current = Test.for_placement(placement).unfinished.order(:id).first
+        result[placement.to_sym] = {
+          enabled: placement_enabled?(placement),
+          baseline: Variant.baseline(placement).to_h(with_stats: true),
+          current_test: current && test_hash(current),
+        }
+      end
+    end
+
+    def self.placement_enabled?(placement)
+      return false unless SiteSetting.guest_cta_enabled
+      placement == "banner" ? SiteSetting.guest_cta_banner_enabled : SiteSetting.guest_cta_popup_enabled
+    end
+
     def self.test_hash(test)
       variants = test.variants.to_a
       control = variants.find(&:is_control)

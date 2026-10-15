@@ -25,6 +25,11 @@ delay, frequency cap and close behaviour, no SEO impact). What is new:
   independently.
 - **One-click winner.** "Make this the default" ends the test and copies the
   winning variant onto the current version.
+- **Overview panel.** The admin dashboard (`Admin`, the admin homepage) shows a
+  "Guest CTA tests" panel with an on/off switch for the popup and one for the
+  banner, plus each placement's current test results or, when nothing is
+  running, the current version's numbers. The same switch sits at the top of
+  the Popup and Banner pages.
 
 ## Install
 

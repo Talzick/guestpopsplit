@@ -92,6 +92,30 @@ RSpec.describe "Guest CTA admin dashboard" do
     expect(response.parsed_body["past_tests"].first["winner_variant_id"]).to eq(variant_id)
   end
 
+  it "summarises both placements for the overview panel" do
+    SiteSetting.guest_cta_popup_enabled = true
+    SiteSetting.guest_cta_banner_enabled = false
+
+    get "/guest-cta/admin/overview.json"
+    expect(response.status).to eq(200)
+    json = response.parsed_body
+    expect(json["popup"]["enabled"]).to eq(true)
+    expect(json["banner"]["enabled"]).to eq(false)
+    expect(json["popup"]["baseline"]["stats"]["impressions"]).to eq(0)
+    expect(json["popup"]["current_test"]).to be_nil
+
+    post "/guest-cta/admin/tests.json", params: { name: "Headline", placement: "popup" }
+    get "/guest-cta/admin/overview.json"
+    expect(response.parsed_body["popup"]["current_test"]["name"]).to eq("Headline")
+    expect(response.parsed_body["popup"]["current_test"]["status"]).to eq("draft")
+  end
+
+  it "hides the overview from non-admins" do
+    sign_in(Fabricate(:moderator))
+    get "/guest-cta/admin/overview.json"
+    expect(response.status).to eq(404)
+  end
+
   it "edits the banner baseline" do
     put "/guest-cta/admin/baseline.json",
         params: {

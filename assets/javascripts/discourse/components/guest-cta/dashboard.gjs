@@ -6,10 +6,15 @@ import { LinkTo } from "@ember/routing";
 import { service } from "@ember/service";
 import { eq, not } from "truth-helpers";
 import DButton from "discourse/components/d-button";
+import DToggleSwitch from "discourse/components/d-toggle-switch";
 import { ajax } from "discourse/lib/ajax";
 import { popupAjaxError } from "discourse/lib/ajax-error";
 import { i18n } from "discourse-i18n";
 import { formatDate } from "../../lib/guest-cta/format";
+import {
+  placementEnabled,
+  setPlacementEnabled,
+} from "../../lib/guest-cta/settings";
 import PastTests from "./past-tests";
 import ResultsTable from "./results-table";
 import StatTiles from "./stat-tiles";
@@ -28,6 +33,7 @@ export default class GuestCtaDashboard extends Component {
   @tracked data = this.args.model;
   @tracked newTestName = "";
   @tracked busy = false;
+  @tracked togglingVisibility = false;
 
   get placement() {
     return this.args.placement || this.data.placement || "popup";
@@ -79,13 +85,16 @@ export default class GuestCtaDashboard extends Component {
     return i18n("guest_cta.admin.baseline_stats_all_time");
   }
 
+  get placementEnabled() {
+    return placementEnabled(this.siteSettings, this.placement);
+  }
+
   get placementDisabled() {
-    if (!this.siteSettings.guest_cta_enabled) {
-      return true;
-    }
-    return this.isBanner
-      ? !this.siteSettings.guest_cta_banner_enabled
-      : !this.siteSettings.guest_cta_popup_enabled;
+    return !this.placementEnabled;
+  }
+
+  get visibilityLabel() {
+    return this.t("visibility_label");
   }
 
   get heading() {
@@ -147,6 +156,22 @@ export default class GuestCtaDashboard extends Component {
       popupAjaxError(error);
     } finally {
       this.busy = false;
+    }
+  }
+
+  @action
+  async toggleVisibility() {
+    this.togglingVisibility = true;
+    try {
+      await setPlacementEnabled(
+        this.siteSettings,
+        this.placement,
+        !this.placementEnabled,
+      );
+    } catch (error) {
+      popupAjaxError(error);
+    } finally {
+      this.togglingVisibility = false;
     }
   }
 
@@ -273,14 +298,20 @@ export default class GuestCtaDashboard extends Component {
         <LinkTo
           @route="adminPlugins.show.guest-cta-ab-dashboard"
           class="guest-cta-switcher__link
-            {{if (eq this.placement 'popup') 'guest-cta-switcher__link--active'}}"
+            {{if
+              (eq this.placement 'popup')
+              'guest-cta-switcher__link--active'
+            }}"
         >
           {{i18n "guest_cta.admin.nav_popup"}}
         </LinkTo>
         <LinkTo
           @route="adminPlugins.show.guest-cta-ab-banner"
           class="guest-cta-switcher__link
-            {{if (eq this.placement 'banner') 'guest-cta-switcher__link--active'}}"
+            {{if
+              (eq this.placement 'banner')
+              'guest-cta-switcher__link--active'
+            }}"
         >
           {{i18n "guest_cta.admin.nav_banner"}}
         </LinkTo>
@@ -300,6 +331,14 @@ export default class GuestCtaDashboard extends Component {
         />
       </div>
 
+      <div class="guest-cta-admin__visibility">
+        <DToggleSwitch
+          @state={{this.placementEnabled}}
+          @translatedLabel={{this.visibilityLabel}}
+          disabled={{this.togglingVisibility}}
+          {{on "click" this.toggleVisibility}}
+        />
+      </div>
       {{#if this.placementDisabled}}
         <div class="alert alert-warning">{{this.disabledWarning}}</div>
       {{/if}}

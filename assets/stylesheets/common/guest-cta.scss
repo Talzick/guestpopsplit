@@ -732,3 +732,152 @@ body.signup-page .gcb-banner {
     border-bottom-color: var(--tertiary);
   }
 }
+
+// --- Overview panel (admin dashboard) and the on/off switches --------------
+
+.guest-cta-admin__visibility {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+  flex-wrap: wrap;
+  margin-bottom: 1em;
+
+  .d-toggle-switch__checkbox-label {
+    font-weight: 600;
+  }
+}
+
+.guest-cta-overview {
+  background: var(--secondary);
+  border: 1px solid var(--primary-low);
+  border-radius: 10px;
+  padding: 1.25em 1.5em;
+  margin: 1em 0 1.5em;
+
+  h3 {
+    margin: 0;
+  }
+
+  p {
+    margin: 0.25em 0 0;
+  }
+}
+
+.guest-cta-overview__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1em;
+  margin-bottom: 1em;
+}
+
+.guest-cta-overview__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1em;
+}
+
+.guest-cta-overview__placement {
+  border: 1px solid var(--primary-low);
+  border-radius: 8px;
+  padding: 1em 1.25em;
+  min-width: 0;
+
+  &--off {
+    background: var(--primary-very-low);
+  }
+}
+
+.guest-cta-overview__placement-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75em;
+  flex-wrap: wrap;
+
+  .d-toggle-switch__checkbox-label {
+    font-weight: 600;
+    font-size: var(--font-up-1);
+  }
+}
+
+.guest-cta-overview__state {
+  font-size: var(--font-down-1);
+  font-weight: 600;
+
+  &--on {
+    color: var(--success);
+  }
+
+  &--off {
+    color: var(--danger);
+  }
+}
+
+.guest-cta-overview__manage {
+  margin-left: auto;
+  font-size: var(--font-down-1);
+  white-space: nowrap;
+
+  .d-icon {
+    font-size: var(--font-down-2);
+  }
+}
+
+.guest-cta-overview__test {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  flex-wrap: wrap;
+  margin: 0.9em 0 0.5em;
+}
+
+.guest-cta-overview__current {
+  margin: 0.9em 0 0.5em;
+}
+
+.guest-cta-overview__variants {
+  width: 100%;
+  margin: 0.25em 0 0;
+  font-size: var(--font-down-1);
+
+  th,
+  td {
+    padding: 0.35em 0.5em;
+    vertical-align: middle;
+  }
+
+  th {
+    color: var(--primary-medium);
+    font-weight: 600;
+    border-bottom: 1px solid var(--primary-low);
+  }
+
+  td {
+    border-bottom: 1px solid var(--primary-very-low);
+  }
+
+  .guest-cta-badge {
+    margin-left: 0.4em;
+  }
+}
+
+.guest-cta-overview__num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.guest-cta-overview__row--leader td {
+  background: var(--success-low);
+}
+
+.guest-cta-overview__sig {
+  color: var(--success);
+}
+
+.guest-cta-tiles--compact .guest-cta-tile {
+  padding: 0.6em 0.8em;
+
+  .guest-cta-tile__value {
+    font-size: var(--font-up-1);
+  }
+}

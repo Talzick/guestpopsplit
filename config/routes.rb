@@ -5,6 +5,7 @@ GuestCta::Engine.routes.draw do
 
   scope "/admin" do
     get "/dashboard" => "admin/dashboard#show"
+    get "/overview" => "admin/overview#show"
     put "/baseline" => "admin/baseline#update"
 
     resources :tests, only: %i[create update destroy], controller: "admin/tests" do

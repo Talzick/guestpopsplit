@@ -3,7 +3,8 @@
 # name: discourse-guest-cta-ab
 # about: Shows a call-to-action popup to logged-out visitors and lets admins A/B test variants of it.
 # version: 1.0.0
-# url: https://github.com/
+# authors: Talzick
+# url: https://github.com/Talzick/guestpopsplit
 # required_version: 2.7.0
 
 enabled_site_setting :guest_cta_enabled

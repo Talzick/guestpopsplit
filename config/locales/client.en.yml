@@ -1,4 +1,11 @@
 en:
+  admin_js:
+    admin:
+      site_settings:
+        categories:
+          # Settings category (from the root key in config/settings.yml); also
+          # used as the plugin's display name in Admin > Plugins.
+          discourse_guest_cta_ab: "Guest CTA tests"
   js:
     guest_cta:
       admin:
@@ -10,7 +17,8 @@ en:
         popup:
           heading: "Guest CTA popup"
           description: "The call-to-action popup shown to logged-out visitors. Run A/B tests to find the version that gets the most clicks, then make it the default with one click."
-          disabled_warning: "The popup is currently switched off (site settings \"guest cta enabled\" / \"guest cta popup enabled\"). Nothing is shown to visitors and tests will not collect any data until it is enabled."
+          disabled_warning: "The popup is switched off. Nothing is shown to visitors and tests will not collect any data until it is switched on."
+          visibility_label: "Show the popup to logged-out visitors"
           baseline_heading: "Current popup"
           baseline_description: "This is what visitors see right now. It is also the starting point (control) for any new test."
           baseline_paused: "A test is running, so visitors are currently seeing the test's variants instead of this popup."
@@ -20,13 +28,26 @@ en:
         banner:
           heading: "Guest banner (after the first post)"
           description: "The clickable banner image shown to logged-out visitors under the first post of every topic. Run A/B tests to find the image that gets the most clicks, then make it the default with one click."
-          disabled_warning: "The banner is currently switched off (site settings \"guest cta enabled\" / \"guest cta banner enabled\"). Nothing is shown to visitors and tests will not collect any data until it is enabled."
+          disabled_warning: "The banner is switched off. Nothing is shown to visitors and tests will not collect any data until it is switched on."
+          visibility_label: "Show the banner to logged-out visitors"
           baseline_heading: "Current banner"
           baseline_description: "This is what visitors see right now. It is also the starting point (control) for any new test."
           baseline_paused: "A test is running, so visitors are currently seeing the test's variants instead of this banner."
           edit_baseline_title: "Edit the current banner"
           not_configured: "No banner image is set yet, so nothing is shown to visitors. Click Edit to add an image, alt text and link."
           new_test_description: "A test starts with a copy of the current banner as the control. Add one or more variants with different images, alt text or links, then start the test. Each visitor is randomly shown one version and keeps seeing that same version."
+
+        overview:
+          title: "Guest CTA tests"
+          description: "Switch the popup and the banner on or off for logged-out visitors, and keep an eye on the current tests."
+          shown: "Shown to visitors"
+          hidden: "Switched off"
+          manage: "Manage"
+          no_test: "No test running. Current version:"
+          current_while_draft: "Visitors still see the current version:"
+          draft_note: "Draft with %{count} versions, not started yet."
+          running_note: "Live since %{date} · %{impressions} impressions · %{clicks} clicks"
+          load_error: "Could not load the Guest CTA overview."
 
         impressions: "Impressions"
         clicks: "Clicks"
