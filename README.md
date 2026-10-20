@@ -7,12 +7,15 @@ A/B test different versions of each:
 - a **clickable banner image under the first post** of every topic (replaces the
   banner theme component).
 
-Both behave exactly as the components did (same markup and styles, same popup
-delay, frequency cap and close behaviour, no SEO impact). What is new:
+Both behave exactly as the components did (same markup and styles, same
+frequency cap and close behaviour, no SEO impact). What is new:
 
 - **Variants.** Each version is stored server-side. A popup variant has a
-  heading, image, subheading, body, button text, link and colours. A banner
-  variant has a desktop image, an optional mobile image, alt text and a link.
+  heading, image, subheading, body, button text, link, colours and a delay
+  (seconds after page load before it appears, 0 by default so it shows at
+  once). The delay is part of the variant, so it can be split tested like
+  anything else. A banner variant has a desktop image, an optional mobile
+  image, alt text and a link.
 - **Tests.** A test starts with a frozen copy of the current popup as the
   control, plus any variants you add. Visitors are split evenly at random, and
   each visitor keeps seeing the version they were first shown.
@@ -52,8 +55,9 @@ Then:
    **Edit** and set the image, alt text and link.
 2. Under `Admin → Settings → Plugins`, switch on `guest cta popup enabled`
    and/or `guest cta banner enabled`. Both are off by default so nothing
-   generic is ever shown to visitors. The popup's delay, frequency cap, close
-   button and background click settings are there too.
+   generic is ever shown to visitors. The popup's frequency cap, close button
+   and background click settings are there too. The delay before the popup
+   shows is set on the popup itself (Edit on the Popup page), not here.
 3. Disable the old popup and banner theme components (or remove them), so
    nothing shows twice.
 
@@ -62,8 +66,10 @@ Then:
 1. On the Popup or Banner page, give the test a name and click **Create
    test**. A draft is created with the control (a copy of the current version).
 2. **Add variant** opens an editor pre-filled with the control, with a live
-   preview. Change the heading, image, text, colours, alt text or link and
-   save. Add as many variants as you like.
+   preview. Change the heading, image, text, colours, delay, alt text or link
+   and save. To test timing alone, keep everything else the same and give
+   each variant a different delay (the control keeps the current one). Add as
+   many variants as you like.
 3. **Start test.** From now on logged-out visitors are randomly assigned one
    version and the counters run.
 4. Watch the results table. CTR is clicks ÷ impressions. "vs control" shows the

@@ -416,6 +416,11 @@
   white-space: nowrap;
 }
 
+.guest-cta-results__delay {
+  color: var(--primary-medium);
+  font-size: var(--font-down-2);
+}
+
 .guest-cta-results__lift {
   display: block;
   font-weight: 600;

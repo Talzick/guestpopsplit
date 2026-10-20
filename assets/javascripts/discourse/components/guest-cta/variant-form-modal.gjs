@@ -23,6 +23,7 @@ const POPUP_FIELDS = [
   "button_text_color",
   "button_glow",
   "open_in_new_tab",
+  "show_delay_seconds",
 ];
 
 const BANNER_FIELDS = [
@@ -52,6 +53,7 @@ export default class VariantFormModal extends Component {
     if (!this.isBanner) {
       form.button_glow = !!source.button_glow;
       form.image_max_width_px = source.image_max_width_px || 220;
+      form.show_delay_seconds = source.show_delay_seconds ?? 0;
     }
     this.form = form;
   }
@@ -315,6 +317,19 @@ export default class VariantFormModal extends Component {
                   {{on "change" (fn this.updateBool "button_glow")}}
                 />
                 <span>{{i18n "guest_cta.admin.fields.button_glow"}}</span>
+              </label>
+
+              <label class="guest-cta-field guest-cta-field--short">
+                <span>{{i18n "guest_cta.admin.fields.show_delay_seconds"}}</span>
+                <input
+                  type="number"
+                  min="0"
+                  max="300"
+                  step="0.5"
+                  value={{this.form.show_delay_seconds}}
+                  {{on "input" (fn this.update "show_delay_seconds")}}
+                />
+                <small>{{i18n "guest_cta.admin.fields.show_delay_seconds_help"}}</small>
               </label>
             {{/if}}
 

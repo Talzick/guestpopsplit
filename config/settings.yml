@@ -8,11 +8,6 @@ discourse_guest_cta_ab:
   guest_cta_banner_enabled:
     default: false
     client: true
-  guest_cta_show_delay_seconds:
-    default: 1.5
-    min: 0
-    max: 60
-    client: true
   guest_cta_show_frequency_hours:
     default: 24
     min: 0

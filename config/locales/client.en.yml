@@ -23,7 +23,7 @@ en:
           baseline_description: "This is what visitors see right now. It is also the starting point (control) for any new test."
           baseline_paused: "A test is running, so visitors are currently seeing the test's variants instead of this popup."
           edit_baseline_title: "Edit the current popup"
-          new_test_description: "A test starts with a copy of the current popup as the control. Add one or more variants with different text, images or colours, then start the test. Each visitor is randomly shown one version and keeps seeing that same version."
+          new_test_description: "A test starts with a copy of the current popup as the control. Add one or more variants with different text, images, colours or delay, then start the test. Each visitor is randomly shown one version and keeps seeing that same version."
 
         banner:
           heading: "Guest banner (after the first post)"
@@ -64,6 +64,8 @@ en:
         delete: "Delete"
         save: "Save"
         preview: "Live preview"
+        shows_instantly: "Shows instantly"
+        shows_after: "Shows after %{seconds}s"
 
         edit_baseline: "Edit"
         baseline_stats_since: "Counting since %{date} (when the last test winner was applied)."
@@ -115,6 +117,8 @@ en:
           button_text_color: "Button text colour"
           button_glow: "Glowing pulse around the button"
           open_in_new_tab: "Open the link in a new tab"
+          show_delay_seconds: "Delay before showing (seconds)"
+          show_delay_seconds_help: "How long after the page loads the popup appears. 0 shows it straight away. Test different delays by giving each variant its own value."
           banner_image: "Banner image"
           banner_image_help: "Shown on desktop (and on mobile unless a mobile image is set). Upload an image or paste its URL."
           banner_mobile_image: "Mobile image (optional)"

@@ -11,6 +11,18 @@ import {
 } from "../../lib/guest-cta/format";
 import VariantPreview from "./variant-preview";
 
+// "Shows after 3s" / "Shows instantly", popup only. Lets admins tell variants
+// apart when the delay is the only thing that differs.
+function delayNote(placement, variant) {
+  if (placement === "banner") {
+    return null;
+  }
+  const seconds = Number(variant.show_delay_seconds) || 0;
+  return seconds > 0
+    ? i18n("guest_cta.admin.shows_after", { seconds })
+    : i18n("guest_cta.admin.shows_instantly");
+}
+
 // One row per variant: preview, counts, CTR, and how it compares to control.
 // @mode is "draft", "running" or "ended".
 export default class ResultsTable extends Component {
@@ -29,6 +41,7 @@ export default class ResultsTable extends Component {
         isLeader: !!variant.is_leader,
         isWinner: test.winner_variant_id === variant.id,
         isControl: variant.is_control,
+        delayNote: delayNote(test.placement, variant),
       };
     });
   }
@@ -98,6 +111,9 @@ export default class ResultsTable extends Component {
                     {{/if}}
                   </span>
                   <span class="guest-cta-results__heading-text">{{row.variant.heading}}</span>
+                  {{#if row.delayNote}}
+                    <span class="guest-cta-results__delay">{{row.delayNote}}</span>
+                  {{/if}}
                 </div>
               </div>
             </td>

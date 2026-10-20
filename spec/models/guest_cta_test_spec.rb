@@ -59,6 +59,39 @@ RSpec.describe GuestCta::Test do
     expect(test.reload.winner_variant_id).to eq(test.control.id)
   end
 
+  it "defaults the popup delay to 0 and copies a tested delay onto the baseline" do
+    baseline = GuestCta::Variant.baseline("popup")
+    expect(baseline.show_delay_seconds).to eq(0.0)
+    expect(GuestCta::LiveConfig.payload[:popup][:baseline][:show_delay_seconds]).to eq(0.0)
+
+    test = described_class.create_with_control!("Delay test", "popup")
+    expect(test.control.show_delay_seconds).to eq(0.0)
+    delayed =
+      test.variants.create!(
+        placement: "popup",
+        name: "5s",
+        heading: "Same heading",
+        button_text: "Go",
+        button_url: "/x",
+        show_delay_seconds: 5,
+      )
+    test.start!
+    expect(GuestCta::LiveConfig.payload[:popup][:test][:variants].last[:show_delay_seconds]).to eq(5.0)
+
+    test.finish!(winner: delayed)
+    expect(GuestCta::Variant.baseline("popup").show_delay_seconds).to eq(5.0)
+  end
+
+  it "rejects a negative or absurd popup delay" do
+    variant = GuestCta::Variant.new(placement: "popup", heading: "x", button_text: "x", button_url: "/")
+    variant.show_delay_seconds = -1
+    expect(variant).not_to be_valid
+    variant.show_delay_seconds = 301
+    expect(variant).not_to be_valid
+    variant.show_delay_seconds = 2.5
+    expect(variant).to be_valid
+  end
+
   it "refuses a banner test until the banner baseline has an image" do
     expect { described_class.create_with_control!("Too early", "banner") }.to raise_error(
       Discourse::InvalidAccess,

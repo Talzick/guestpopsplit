@@ -76,6 +76,17 @@ export default class GuestCtaDashboard extends Component {
     return this.testIsDraft && (this.test.variants || []).length >= 2;
   }
 
+  // Popup only: how long after page load the current version appears.
+  get baselineDelayNote() {
+    if (this.isBanner) {
+      return null;
+    }
+    const seconds = Number(this.baseline.show_delay_seconds) || 0;
+    return seconds > 0
+      ? i18n("guest_cta.admin.shows_after", { seconds })
+      : i18n("guest_cta.admin.shows_instantly");
+  }
+
   get baselineStatsNote() {
     if (this.baseline.stats_from) {
       return i18n("guest_cta.admin.baseline_stats_since", {
@@ -366,6 +377,9 @@ export default class GuestCtaDashboard extends Component {
           />
           <div class="guest-cta-baseline__stats">
             <StatTiles @stats={{this.baseline.stats}} />
+            {{#if this.baselineDelayNote}}
+              <small class="guest-cta-muted guest-cta-baseline__delay">{{this.baselineDelayNote}}</small>
+            {{/if}}
             <small class="guest-cta-muted">{{this.baselineStatsNote}}</small>
           </div>
         </div>

@@ -21,6 +21,7 @@ module GuestCta
       button_text_color
       button_glow
       open_in_new_tab
+      show_delay_seconds
     ].freeze
 
     BANNER_FIELDS = %i[image_url mobile_image_url alt_text button_url open_in_new_tab].freeze
@@ -42,6 +43,7 @@ module GuestCta
         button_text_color: "#ffffff",
         button_glow: true,
         open_in_new_tab: false,
+        show_delay_seconds: 0.0,
       },
       "banner" => {
         image_url: "",
@@ -72,6 +74,12 @@ module GuestCta
     with_options if: :popup? do
       validates :heading, presence: true
       validates :button_text, presence: true
+      # Seconds after page load before the popup appears; 0 shows it at once.
+      validates :show_delay_seconds,
+                numericality: {
+                  greater_than_or_equal_to: 0,
+                  less_than_or_equal_to: 300,
+                }
     end
 
     # The banner baseline may stay empty (then no banner is shown); every
@@ -81,6 +89,7 @@ module GuestCta
       validates :alt_text, presence: true
     end
 
+    before_validation :default_show_delay
     before_save :link_image_uploads
     after_save :ensure_upload_references
     after_commit { Site.clear_anon_cache! }
@@ -146,6 +155,11 @@ module GuestCta
     end
 
     private
+
+    # A cleared delay field in the editor means "show at once".
+    def default_show_delay
+      self.show_delay_seconds = 0.0 if show_delay_seconds.nil?
+    end
 
     # If an image lives in this forum's uploads, remember the upload so the
     # orphan-upload cleanup job never deletes it.

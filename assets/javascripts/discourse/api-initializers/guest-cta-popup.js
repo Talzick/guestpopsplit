@@ -44,14 +44,18 @@ export default apiInitializer("1.0", (api) => {
 
   const markShown = () => writeStorage(SHOWN_KEY, String(Date.now()));
 
+  // Pick the variant up front: the delay is part of what is being tested, so
+  // it has to be known before the popup shows. Impressions are still counted
+  // only when the popup actually appears, so a long delay that visitors leave
+  // before shows up as fewer impressions for that variant.
+  const variant = pickVariant(config, ASSIGNMENT_KEY);
+
   const show = () => {
     // Re-check: they may have logged in during the delay,
     // or the popup may already be on screen.
     if (api.getCurrentUser() || document.querySelector(".gcg-overlay")) {
       return;
     }
-
-    const variant = pickVariant(config, ASSIGNMENT_KEY);
 
     const overlay = document.createElement("div");
     overlay.className = "gcg-overlay";
@@ -103,9 +107,7 @@ export default apiInitializer("1.0", (api) => {
     track(variant.id, "impression");
   };
 
-  const delayMs = Math.max(
-    0,
-    Number(siteSettings.guest_cta_show_delay_seconds) * 1000
-  );
+  // The delay belongs to the variant (0 = straight away) so it can be tested.
+  const delayMs = Math.max(0, (Number(variant.show_delay_seconds) || 0) * 1000);
   setTimeout(show, delayMs);
 });
