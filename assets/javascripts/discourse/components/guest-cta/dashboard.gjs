@@ -23,7 +23,7 @@ import VariantPreview from "./variant-preview";
 
 const VARIANT_LETTERS = "BCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-// One dashboard per placement ("popup" or "banner"): current version with
+// One dashboard per placement ("popup", "banner" or "reply"): current version with
 // its numbers, the draft/running test, and the history of past tests.
 export default class GuestCtaDashboard extends Component {
   @service modal;
@@ -41,6 +41,14 @@ export default class GuestCtaDashboard extends Component {
 
   get isBanner() {
     return this.placement === "banner";
+  }
+
+  get isReply() {
+    return this.placement === "reply";
+  }
+
+  get isPopup() {
+    return !this.isBanner && !this.isReply;
   }
 
   // Placement-specific wording lives under guest_cta.admin.<placement>.*
@@ -78,7 +86,7 @@ export default class GuestCtaDashboard extends Component {
 
   // Popup only: how long after page load the current version appears.
   get baselineDelayNote() {
-    if (this.isBanner) {
+    if (!this.isPopup) {
       return null;
     }
     const seconds = Number(this.baseline.show_delay_seconds) || 0;
@@ -130,8 +138,19 @@ export default class GuestCtaDashboard extends Component {
     return this.t("disabled_warning");
   }
 
-  get bannerNotConfigured() {
-    return this.isBanner && !this.baseline.image_url;
+  // Banner and reply start empty and show nothing until they are set up.
+  get notConfigured() {
+    if (this.isBanner) {
+      return !this.baseline.image_url;
+    }
+    if (this.isReply) {
+      return !this.baseline.reply_raw || !this.baseline.reply_name;
+    }
+    return false;
+  }
+
+  get notConfiguredNote() {
+    return this.t("not_configured");
   }
 
   get newTestDescription() {
@@ -326,6 +345,16 @@ export default class GuestCtaDashboard extends Component {
         >
           {{i18n "guest_cta.admin.nav_banner"}}
         </LinkTo>
+        <LinkTo
+          @route="adminPlugins.show.guest-cta-ab-reply"
+          class="guest-cta-switcher__link
+            {{if
+              (eq this.placement 'reply')
+              'guest-cta-switcher__link--active'
+            }}"
+        >
+          {{i18n "guest_cta.admin.nav_reply"}}
+        </LinkTo>
       </div>
 
       <div class="guest-cta-admin__header">
@@ -353,10 +382,8 @@ export default class GuestCtaDashboard extends Component {
       {{#if this.placementDisabled}}
         <div class="alert alert-warning">{{this.disabledWarning}}</div>
       {{/if}}
-      {{#if this.bannerNotConfigured}}
-        <div class="alert alert-info">{{i18n
-            "guest_cta.admin.banner.not_configured"
-          }}</div>
+      {{#if this.notConfigured}}
+        <div class="alert alert-info">{{this.notConfiguredNote}}</div>
       {{/if}}
 
       <section class="guest-cta-card guest-cta-baseline">

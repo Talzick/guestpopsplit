@@ -51,8 +51,12 @@ module GuestCta
           raise Discourse::InvalidAccess.new(nil, nil, custom_message: "guest_cta.errors.test_already_open")
         end
         baseline = Variant.baseline(placement)
-        if baseline.banner? && baseline.image_url.blank?
-          raise Discourse::InvalidAccess.new(nil, nil, custom_message: "guest_cta.errors.banner_not_configured")
+        unless baseline.configured?
+          raise Discourse::InvalidAccess.new(
+                  nil,
+                  nil,
+                  custom_message: "guest_cta.errors.#{placement}_not_configured",
+                )
         end
         test = create!(name: name, placement: placement, status: "draft")
         test.variants.create!(

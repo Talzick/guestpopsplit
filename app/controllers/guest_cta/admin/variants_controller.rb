@@ -52,7 +52,7 @@ module GuestCta
       private
 
       def variant_params(placement)
-        params.require(:variant).permit(:name, *GuestCta::Variant.content_fields_for(placement))
+        params.require(:variant).permit(:name, *GuestCta::Variant.editable_fields_for(placement))
       end
     end
   end

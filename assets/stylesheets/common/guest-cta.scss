@@ -711,7 +711,168 @@ body.signup-page .gcb-banner {
   }
 }
 
-// Popup / banner switcher at the top of the admin page
+// ---------------------------------------------------------------------------
+// Guest reply under the first post
+// ---------------------------------------------------------------------------
+//
+// The markup reuses Discourse's own post classes (topic-avatar, topic-body,
+// topic-meta-data, names, cooked), so fonts, colours, link styles, image
+// sizing and dark mode come from the active theme exactly as they do for a
+// real reply. The rules here only lay the pieces out and pin the few things
+// that core sizes differently on mobile, so the block looks the same wherever
+// it is rendered.
+
+.ad-reply {
+  width: 100%;
+  box-sizing: border-box;
+
+  .ad-reply__row {
+    display: flex;
+    align-items: flex-start;
+  }
+
+  .ad-reply__avatar {
+    display: block;
+    flex: 0 0 auto;
+    width: var(--topic-avatar-width, 45px);
+    box-sizing: border-box;
+
+    .post-avatar {
+      display: block;
+    }
+
+    .avatar {
+      display: block;
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+  }
+
+  .ad-reply__avatar-placeholder {
+    background: var(--primary-low);
+  }
+
+  .ad-reply__body {
+    display: block;
+    flex: 1 1 auto;
+    min-width: 0;
+    width: auto;
+    max-width: none;
+    box-sizing: border-box;
+  }
+
+  .ad-reply__meta {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5em;
+    flex-wrap: wrap;
+  }
+
+  .ad-reply__names {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5em;
+    flex-wrap: wrap;
+    min-width: 0;
+
+    .ad-reply__name {
+      color: var(--primary-high-or-secondary-low, var(--primary-high));
+      font-weight: bold;
+    }
+  }
+
+  .ad-reply__cooked {
+    // Images in the message behave as they do in posts: never wider than the
+    // reply, keep their aspect ratio.
+    img:not(.emoji) {
+      max-width: 100%;
+      height: auto;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .ad-reply {
+    .ad-reply__avatar {
+      width: 36px;
+      margin-right: 0.6em;
+
+      .avatar {
+        width: 32px;
+        height: 32px;
+      }
+    }
+  }
+}
+
+body.static-login .ad-reply,
+body.login-page .ad-reply,
+body.signup-fullpage .ad-reply,
+body.signup-page .ad-reply {
+  display: none !important;
+}
+
+// Admin previews of the reply: the same markup, inert, inside a post-like box
+
+.ad-reply-preview {
+  display: block;
+  width: 560px;
+  max-width: 100%;
+  padding: 0.75em;
+  border-radius: 10px;
+  background: var(--primary-very-low);
+  box-sizing: border-box;
+
+  .ad-reply--preview {
+    background: var(--secondary);
+    border: 1px solid var(--primary-low);
+    border-radius: 8px;
+    padding: 0.75em 1em;
+    pointer-events: none;
+    user-select: none;
+
+    .ad-reply__cooked {
+      max-height: 320px;
+      overflow: hidden;
+    }
+  }
+
+  &.ad-reply-preview--small {
+    width: 260px;
+    padding: 0.4em;
+    border-radius: 6px;
+
+    .ad-reply--preview {
+      zoom: 0.55;
+      padding: 0.6em 0.8em;
+
+      .ad-reply__cooked {
+        max-height: 220px;
+      }
+    }
+  }
+}
+
+.guest-cta-variant-modal--reply {
+  .guest-cta-variant-modal__preview .ad-reply-preview {
+    width: 460px;
+  }
+}
+
+.guest-cta-field__markdown {
+  font-family: var(--d-font-family--monospace, monospace);
+  font-size: var(--font-down-1);
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.guest-cta-field__error {
+  color: var(--danger);
+}
+
+// Popup / banner / reply switcher at the top of the admin page
 
 .guest-cta-switcher {
   display: flex;

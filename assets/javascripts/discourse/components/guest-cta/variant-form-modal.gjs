@@ -8,6 +8,7 @@ import DModal from "discourse/components/d-modal";
 import UppyImageUploader from "discourse/components/uppy-image-uploader";
 import { ajax } from "discourse/lib/ajax";
 import { extractError } from "discourse/lib/ajax-error";
+import { cook } from "discourse/lib/text";
 import { i18n } from "discourse-i18n";
 import VariantPreview from "./variant-preview";
 
@@ -34,6 +35,11 @@ const BANNER_FIELDS = [
   "open_in_new_tab",
 ];
 
+// The reply's cooked HTML is derived on the server, so it is not a form field.
+const REPLY_FIELDS = ["reply_name", "reply_avatar_url", "reply_raw", "open_in_new_tab"];
+
+const PREVIEW_DEBOUNCE_MS = 350;
+
 // Edit form for the baseline or a test variant, with a live preview.
 //
 // @model: { variant, placement, url, method, testId, isBaseline, title, onSaved }
@@ -41,6 +47,11 @@ export default class VariantFormModal extends Component {
   @tracked form;
   @tracked saving = false;
   @tracked flash = null;
+
+  // Reply only: the preview needs the message cooked, which happens a moment
+  // after the admin stops typing.
+  @tracked previewCooked = "";
+  #cookTimer = null;
 
   constructor() {
     super(...arguments);
@@ -50,12 +61,24 @@ export default class VariantFormModal extends Component {
       form[field] = source[field] ?? "";
     });
     form.open_in_new_tab = !!source.open_in_new_tab;
-    if (!this.isBanner) {
+    if (this.isPopup) {
       form.button_glow = !!source.button_glow;
       form.image_max_width_px = source.image_max_width_px || 220;
       form.show_delay_seconds = source.show_delay_seconds ?? 0;
     }
     this.form = form;
+
+    if (this.isReply) {
+      this.previewCooked = source.reply_cooked || "";
+      if (!this.previewCooked && form.reply_raw) {
+        this.recook();
+      }
+    }
+  }
+
+  willDestroy() {
+    super.willDestroy(...arguments);
+    clearTimeout(this.#cookTimer);
   }
 
   get placement() {
@@ -66,21 +89,72 @@ export default class VariantFormModal extends Component {
     return this.placement === "banner";
   }
 
+  get isReply() {
+    return this.placement === "reply";
+  }
+
+  get isPopup() {
+    return !this.isBanner && !this.isReply;
+  }
+
   get fields() {
-    return this.isBanner ? BANNER_FIELDS : POPUP_FIELDS;
+    if (this.isBanner) {
+      return BANNER_FIELDS;
+    }
+    if (this.isReply) {
+      return REPLY_FIELDS;
+    }
+    return POPUP_FIELDS;
   }
 
-  get title() {
-    return this.args.model.title;
+  // What the preview shows. For the reply that is the form plus the cooked
+  // message, which the server will produce on save.
+  get previewVariant() {
+    if (!this.isReply) {
+      return this.form;
+    }
+    return { ...this.form, reply_cooked: this.previewCooked };
   }
 
-  get isBaseline() {
-    return this.args.model.isBaseline;
+  scheduleRecook() {
+    clearTimeout(this.#cookTimer);
+    this.#cookTimer = setTimeout(() => this.recook(), PREVIEW_DEBOUNCE_MS);
+  }
+
+  async recook() {
+    const raw = this.form.reply_raw || "";
+    if (!raw.trim()) {
+      this.previewCooked = "";
+      return;
+    }
+    try {
+      const cooked = await cook(raw);
+      if (!this.isDestroying && this.form.reply_raw === raw) {
+        this.previewCooked = cooked.toString();
+      }
+    } catch {
+      // The preview is best-effort; the server cooks the real thing on save.
+    }
   }
 
   @action
   update(field, event) {
     this.form = { ...this.form, [field]: event.target.value };
+    if (field === "reply_raw") {
+      this.scheduleRecook();
+    }
+  }
+
+  // Reply only: an uploaded image is appended to the message as Markdown, the
+  // same way the composer would insert it.
+  @action
+  insertImage(upload) {
+    const alt = (upload.original_filename || "image").replace(/\.[^.]+$/, "");
+    const markdown = `![${alt}](${upload.url})`;
+    const raw = this.form.reply_raw || "";
+    const joined = raw.trim() ? `${raw.replace(/\s+$/, "")}\n\n${markdown}\n` : `${markdown}\n`;
+    this.form = { ...this.form, reply_raw: joined };
+    this.scheduleRecook();
   }
 
   @action
@@ -123,8 +197,7 @@ export default class VariantFormModal extends Component {
       @closeModal={{@closeModal}}
       @flash={{this.flash}}
       @flashType="error"
-      class="guest-cta-variant-modal
-        {{if this.isBanner 'guest-cta-variant-modal--banner'}}"
+      class="guest-cta-variant-modal guest-cta-variant-modal--{{this.placement}}"
     >
       <:body>
         <div class="guest-cta-variant-modal__layout">
@@ -200,6 +273,63 @@ export default class VariantFormModal extends Component {
                   {{on "input" (fn this.update "button_url")}}
                 />
               </label>
+            {{else if this.isReply}}
+              {{! ---------- Reply fields ---------- }}
+              <label class="guest-cta-field">
+                <span>{{i18n "guest_cta.admin.fields.reply_name"}}</span>
+                <input
+                  type="text"
+                  value={{this.form.reply_name}}
+                  placeholder={{i18n
+                    "guest_cta.admin.fields.reply_name_placeholder"
+                  }}
+                  {{on "input" (fn this.update "reply_name")}}
+                />
+                <small>{{i18n "guest_cta.admin.fields.reply_name_help"}}</small>
+              </label>
+
+              <div class="guest-cta-field">
+                <span>{{i18n "guest_cta.admin.fields.reply_avatar"}}</span>
+                <UppyImageUploader
+                  @id="guest-cta-reply-avatar"
+                  @type="composer"
+                  @imageUrl={{this.form.reply_avatar_url}}
+                  @onUploadDone={{fn this.uploadDone "reply_avatar_url"}}
+                  @onUploadDeleted={{fn this.uploadDeleted "reply_avatar_url"}}
+                />
+                <input
+                  type="text"
+                  class="guest-cta-field__url"
+                  value={{this.form.reply_avatar_url}}
+                  placeholder={{i18n "guest_cta.admin.fields.image_url_placeholder"}}
+                  {{on "input" (fn this.update "reply_avatar_url")}}
+                />
+                <small>{{i18n "guest_cta.admin.fields.reply_avatar_help"}}</small>
+              </div>
+
+              <label class="guest-cta-field">
+                <span>{{i18n "guest_cta.admin.fields.reply_message"}}</span>
+                <textarea
+                  rows="10"
+                  class="guest-cta-field__markdown"
+                  value={{this.form.reply_raw}}
+                  placeholder={{i18n
+                    "guest_cta.admin.fields.reply_message_placeholder"
+                  }}
+                  {{on "input" (fn this.update "reply_raw")}}
+                ></textarea>
+                <small>{{i18n "guest_cta.admin.fields.reply_message_help"}}</small>
+              </label>
+
+              <div class="guest-cta-field">
+                <span>{{i18n "guest_cta.admin.fields.reply_insert_image"}}</span>
+                <UppyImageUploader
+                  @id="guest-cta-reply-image"
+                  @type="composer"
+                  @onUploadDone={{this.insertImage}}
+                />
+                <small>{{i18n "guest_cta.admin.fields.reply_insert_image_help"}}</small>
+              </div>
             {{else}}
               {{! ---------- Popup fields ---------- }}
               <label class="guest-cta-field">
@@ -347,7 +477,10 @@ export default class VariantFormModal extends Component {
             <span class="guest-cta-variant-modal__preview-label">{{i18n
                 "guest_cta.admin.preview"
               }}</span>
-            <VariantPreview @variant={{this.form}} @placement={{this.placement}} />
+            <VariantPreview
+              @variant={{this.previewVariant}}
+              @placement={{this.placement}}
+            />
           </div>
         </div>
       </:body>

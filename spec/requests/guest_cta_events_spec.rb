@@ -5,6 +5,7 @@ RSpec.describe GuestCta::EventsController do
 
   let(:baseline) { GuestCta::Variant.baseline("popup") }
   let(:banner_baseline) { GuestCta::Variant.baseline("banner") }
+  let(:reply_baseline) { GuestCta::Variant.baseline("reply") }
 
   it "counts impressions and clicks for the live baselines" do
     post "/guest-cta/events.json", params: { variant_id: baseline.id, event: "impression" }
@@ -12,12 +13,14 @@ RSpec.describe GuestCta::EventsController do
     post "/guest-cta/events.json", params: { variant_id: baseline.id, event: "impression" }
     post "/guest-cta/events.json", params: { variant_id: baseline.id, event: "click" }
     post "/guest-cta/events.json", params: { variant_id: banner_baseline.id, event: "impression" }
+    post "/guest-cta/events.json", params: { variant_id: reply_baseline.id, event: "click" }
 
     stats = baseline.stats
     expect(stats[:impressions]).to eq(2)
     expect(stats[:clicks]).to eq(1)
     expect(stats[:ctr]).to eq(50.0)
     expect(banner_baseline.stats[:impressions]).to eq(1)
+    expect(reply_baseline.stats[:clicks]).to eq(1)
   end
 
   it "rejects unknown events and variants that are not live" do
@@ -56,6 +59,12 @@ RSpec.describe "Guest CTA admin dashboard" do
     expect(response.status).to eq(200)
     expect(response.parsed_body["placement"]).to eq("banner")
     expect(response.parsed_body["baseline"]["image_url"]).to eq("")
+
+    get "/guest-cta/admin/dashboard.json", params: { placement: "reply" }
+    expect(response.status).to eq(200)
+    expect(response.parsed_body["placement"]).to eq("reply")
+    expect(response.parsed_body["baseline"]["reply_raw"]).to eq("")
+    expect(response.parsed_body["baseline"]["reply_name"]).to eq("")
   end
 
   it "runs a popup test end to end" do
@@ -92,15 +101,18 @@ RSpec.describe "Guest CTA admin dashboard" do
     expect(response.parsed_body["past_tests"].first["winner_variant_id"]).to eq(variant_id)
   end
 
-  it "summarises both placements for the overview panel" do
+  it "summarises every placement for the overview panel" do
     SiteSetting.guest_cta_popup_enabled = true
     SiteSetting.guest_cta_banner_enabled = false
+    SiteSetting.guest_cta_reply_enabled = true
 
     get "/guest-cta/admin/overview.json"
     expect(response.status).to eq(200)
     json = response.parsed_body
     expect(json["popup"]["enabled"]).to eq(true)
     expect(json["banner"]["enabled"]).to eq(false)
+    expect(json["reply"]["enabled"]).to eq(true)
+    expect(json["reply"]["baseline"]["stats"]["impressions"]).to eq(0)
     expect(json["popup"]["baseline"]["stats"]["impressions"]).to eq(0)
     expect(json["popup"]["current_test"]).to be_nil
 
@@ -116,6 +128,9 @@ RSpec.describe "Guest CTA admin dashboard" do
     expect(response.media_type).to eq("text/html")
 
     get "/admin/plugins/discourse-guest-cta-ab/popup"
+    expect(response.status).to eq(200)
+
+    get "/admin/plugins/discourse-guest-cta-ab/reply"
     expect(response.status).to eq(200)
 
     get "/admin/plugins/discourse-guest-cta-ab/other"
@@ -143,5 +158,27 @@ RSpec.describe "Guest CTA admin dashboard" do
     expect(baseline.image_url).to eq("/uploads/new-banner.png")
     expect(baseline.alt_text).to eq("New banner")
     expect(baseline.button_url).to eq("/offer")
+  end
+
+  it "edits the reply baseline, cooking the message and ignoring a submitted cooked field" do
+    put "/guest-cta/admin/baseline.json",
+        params: {
+          placement: "reply",
+          variant: {
+            reply_name: "TFC Team",
+            reply_avatar_url: "/uploads/default/original/1X/avatar.png",
+            reply_raw: "Get your [free reading](https://example.com/reading) ![pic](/uploads/default/original/1X/abc.png)",
+            reply_cooked: "<script>nope</script>",
+            open_in_new_tab: "true",
+          },
+        }
+    expect(response.status).to eq(200)
+    json = response.parsed_body
+    expect(json["reply_name"]).to eq("TFC Team")
+    expect(json["reply_avatar_url"]).to eq("/uploads/default/original/1X/avatar.png")
+    expect(json["reply_cooked"]).to include('href="https://example.com/reading"')
+    expect(json["reply_cooked"]).to include("<img")
+    expect(json["reply_cooked"]).not_to include("<script")
+    expect(json["open_in_new_tab"]).to eq(true)
   end
 end

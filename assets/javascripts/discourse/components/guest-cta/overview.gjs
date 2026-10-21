@@ -38,9 +38,14 @@ const PLACEMENTS = [
     titleKey: "guest_cta.admin.nav_banner",
     route: "adminPlugins.show.guest-cta-ab-banner",
   },
+  {
+    placement: "reply",
+    titleKey: "guest_cta.admin.nav_reply",
+    route: "adminPlugins.show.guest-cta-ab-reply",
+  },
 ];
 
-// Both placements at a glance: an on/off switch each, plus the current test's
+// Every placement at a glance: an on/off switch each, plus the current test's
 // results or, when nothing is running, the current version's numbers. Shown
 // on the admin dashboard (the admin homepage).
 export default class GuestCtaOverview extends Component {

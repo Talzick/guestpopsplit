@@ -5,7 +5,11 @@ import { service } from "@ember/service";
 import { htmlSafe } from "@ember/template";
 import { modifier } from "ember-modifier";
 import { bannerInnerHtml } from "../../lib/guest-cta/banner-markup";
-import { pickVariant, track } from "../../lib/guest-cta/tracking";
+import {
+  observeImpression,
+  pickVariant,
+  track,
+} from "../../lib/guest-cta/tracking";
 
 const ASSIGNMENT_KEY = "guest_cta_banner_assignment";
 
@@ -13,19 +17,15 @@ const ASSIGNMENT_KEY = "guest_cta_banner_assignment";
 // so re-renders of the first post do not count twice.
 const countedTopics = new Set();
 
-// Rendered after the first post of a topic for logged-out visitors.
+// Rendered after the first post of a topic for logged-out visitors (see
+// after-first-post.gjs, which places it together with the guest reply).
 export default class PostBanner extends Component {
   @service site;
   @service siteSettings;
   @service currentUser;
 
-  static shouldRender(args, context) {
-    const post = args.post || args.outletArgs?.post;
-    return !!post && post.post_number === 1 && !context.currentUser;
-  }
-
   get post() {
-    return this.args.post || this.args.outletArgs?.post;
+    return this.args.post;
   }
 
   get config() {
@@ -71,30 +71,13 @@ export default class PostBanner extends Component {
       return;
     }
 
-    const count = () => {
+    return observeImpression(element, () => {
       if (countedTopics.has(topicId)) {
         return;
       }
       countedTopics.add(topicId);
       track(variantId, "impression");
-    };
-
-    if (typeof IntersectionObserver === "undefined") {
-      count();
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) {
-          count();
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.5 }
-    );
-    observer.observe(element);
-    return () => observer.disconnect();
+    });
   });
 
   @action

@@ -8,6 +8,9 @@ discourse_guest_cta_ab:
   guest_cta_banner_enabled:
     default: false
     client: true
+  guest_cta_reply_enabled:
+    default: false
+    client: true
   guest_cta_show_frequency_hours:
     default: 24
     min: 0

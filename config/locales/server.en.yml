@@ -1,8 +1,9 @@
 en:
   site_settings:
-    guest_cta_enabled: "Master switch for this plugin: the call-to-action popup and the banner shown to logged-out visitors. Logged-in members never see them, and search engine crawlers cannot see them (they are served a separate no-JavaScript view)."
+    guest_cta_enabled: "Master switch for this plugin: the call-to-action popup, the banner and the reply shown to logged-out visitors. Logged-in members never see them, and search engine crawlers cannot see them (they are served a separate no-JavaScript view)."
     guest_cta_popup_enabled: "Show the call-to-action popup to logged-out visitors. Set up the popup text under Admin → Plugins → Guest CTA tests before enabling."
     guest_cta_banner_enabled: "Show the clickable banner under the first post of each topic to logged-out visitors. Set up the banner image under Admin → Plugins → Guest CTA tests before enabling."
+    guest_cta_reply_enabled: "Show the guest reply (a message styled like a forum reply, shown under a name and profile photo of your choosing) directly under the first post of each topic to logged-out visitors. Set it up under Admin → Plugins → Guest CTA tests before enabling."
     guest_cta_show_frequency_hours: "Popup: once dismissed or clicked, don't show it to that visitor again for this many hours. Set to 0 to show on every visit (not recommended)."
     guest_cta_show_close_button: "Popup: show an × close button in the corner."
     guest_cta_close_on_background_click: "Popup: clicking the darkened background closes it."
@@ -19,3 +20,4 @@ en:
       use_baseline_route: "The current version is edited from the dashboard, not as a test variant."
       cannot_delete_control: "The control cannot be deleted."
       banner_not_configured: "Set the current banner's image, alt text and link before starting a banner test."
+      reply_not_configured: "Set the current reply's name and message before starting a reply test."

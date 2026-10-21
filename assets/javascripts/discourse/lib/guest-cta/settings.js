@@ -4,6 +4,7 @@ import { ajax } from "discourse/lib/ajax";
 export const PLACEMENT_SETTINGS = {
   popup: "guest_cta_popup_enabled",
   banner: "guest_cta_banner_enabled",
+  reply: "guest_cta_reply_enabled",
 };
 
 export function placementEnabled(siteSettings, placement) {

@@ -12,6 +12,7 @@ en:
         title: "Guest CTA tests"
         nav_popup: "Popup"
         nav_banner: "Banner"
+        nav_reply: "Reply"
         refresh: "Refresh"
 
         popup:
@@ -37,9 +38,21 @@ en:
           not_configured: "No banner image is set yet, so nothing is shown to visitors. Click Edit to add an image, alt text and link."
           new_test_description: "A test starts with a copy of the current banner as the control. Add one or more variants with different images, alt text or links, then start the test. Each visitor is randomly shown one version and keeps seeing that same version."
 
+        reply:
+          heading: "Guest reply (under the first post)"
+          description: "A message styled like a forum reply, shown under a name and profile photo of your choosing directly below the first post of every topic, to logged-out visitors only. Write it like a normal reply, with links and images. Run A/B tests to find the message that gets the most clicks, then make it the default with one click."
+          disabled_warning: "The reply is switched off. Nothing is shown to visitors and tests will not collect any data until it is switched on."
+          visibility_label: "Show the reply to logged-out visitors"
+          baseline_heading: "Current reply"
+          baseline_description: "This is what visitors see right now. It is also the starting point (control) for any new test."
+          baseline_paused: "A test is running, so visitors are currently seeing the test's variants instead of this reply."
+          edit_baseline_title: "Edit the current reply"
+          not_configured: "No reply is set yet, so nothing is shown to visitors. Click Edit to set the name and photo it appears under and write the message."
+          new_test_description: "A test starts with a copy of the current reply as the control. Add one or more variants with a different message, links, images, name or photo, then start the test. Each visitor is randomly shown one version and keeps seeing that same version."
+
         overview:
           title: "Guest CTA tests"
-          description: "Switch the popup and the banner on or off for logged-out visitors, and keep an eye on the current tests."
+          description: "Switch the popup, the banner and the reply on or off for logged-out visitors, and keep an eye on the current tests."
           shown: "Shown to visitors"
           hidden: "Switched off"
           manage: "Manage"
@@ -126,3 +139,13 @@ en:
           alt_text: "Alt text"
           alt_text_help: "Describes the image for screen readers and search engines."
           banner_link: "Link"
+          reply_name: "Name"
+          reply_name_placeholder: "e.g. Chris"
+          reply_name_help: "Shown as the author of the reply. Plain text, no link."
+          reply_avatar: "Profile photo"
+          reply_avatar_help: "Upload an image or paste its URL. Shown as a round avatar next to the name; square images work best. Leave empty for a blank avatar."
+          reply_message: "Message"
+          reply_message_placeholder: "Write the reply here, with Markdown like a normal post. Every link in it counts as a click."
+          reply_message_help: "Markdown, exactly as in the composer: links, images, bold, lists and quotes all work. Clicks on any link in the message are counted."
+          reply_insert_image: "Add an image"
+          reply_insert_image_help: "Uploads the image and adds it to the end of the message. Move it by editing the Markdown."

@@ -5,7 +5,7 @@ module GuestCta
     self.table_name = "guest_cta_variants"
 
     # Where a variant is shown. Each placement has its own baseline and tests.
-    PLACEMENTS = %w[popup banner].freeze
+    PLACEMENTS = %w[popup banner reply].freeze
 
     # Everything a visitor can see, per placement. These are the fields copied
     # onto the baseline when a test winner is confirmed.
@@ -26,9 +26,16 @@ module GuestCta
 
     BANNER_FIELDS = %i[image_url mobile_image_url alt_text button_url open_in_new_tab].freeze
 
-    CONTENT_FIELDS = (POPUP_FIELDS + BANNER_FIELDS).uniq.freeze
+    # The reply is written in Markdown and cooked on save; the cooked HTML is
+    # part of the content so a winner's copy carries it over unchanged.
+    REPLY_FIELDS = %i[reply_name reply_avatar_url reply_raw reply_cooked open_in_new_tab].freeze
 
-    # Placeholder seed values for a brand-new install. Both placements are
+    # Reply fields an admin may set directly (the cooked HTML is derived).
+    REPLY_EDITABLE_FIELDS = (REPLY_FIELDS - %i[reply_cooked]).freeze
+
+    CONTENT_FIELDS = (POPUP_FIELDS + BANNER_FIELDS + REPLY_FIELDS).uniq.freeze
+
+    # Placeholder seed values for a brand-new install. All placements are
     # switched off by default, so admins fill these in before anything shows.
     DEFAULT_CONTENT = {
       "popup" => {
@@ -50,6 +57,13 @@ module GuestCta
         mobile_image_url: "",
         alt_text: "",
         button_url: "/",
+        open_in_new_tab: false,
+      },
+      "reply" => {
+        reply_name: "",
+        reply_avatar_url: "",
+        reply_raw: "",
+        reply_cooked: "",
         open_in_new_tab: false,
       },
     }.freeze
@@ -89,13 +103,34 @@ module GuestCta
       validates :alt_text, presence: true
     end
 
+    # Likewise the reply baseline may stay empty; a tested reply needs the name
+    # it is posted under and a message.
+    with_options if: -> { reply? && !is_baseline } do
+      validates :reply_name, presence: true
+      validates :reply_raw, presence: true
+    end
+
     before_validation :default_show_delay
+    before_validation :normalize_reply_name, if: :reply?
+    before_save :cook_reply, if: :reply?
     before_save :link_image_uploads
     after_save :ensure_upload_references
     after_commit { Site.clear_anon_cache! }
 
     def self.content_fields_for(placement)
-      placement.to_s == "banner" ? BANNER_FIELDS : POPUP_FIELDS
+      case placement.to_s
+      when "banner"
+        BANNER_FIELDS
+      when "reply"
+        REPLY_FIELDS
+      else
+        POPUP_FIELDS
+      end
+    end
+
+    # The fields an admin may submit for a placement.
+    def self.editable_fields_for(placement)
+      placement.to_s == "reply" ? REPLY_EDITABLE_FIELDS : content_fields_for(placement)
     end
 
     def self.baseline(placement)
@@ -111,6 +146,23 @@ module GuestCta
 
     def banner?
       placement == "banner"
+    end
+
+    def reply?
+      placement == "reply"
+    end
+
+    # True when there is something to show visitors. The popup always has a
+    # heading; the banner needs an image and the reply a name and a message.
+    def configured?
+      case placement
+      when "banner"
+        image_url.present?
+      when "reply"
+        reply_name.present? && reply_raw.present?
+      else
+        true
+      end
     end
 
     def content_fields
@@ -149,12 +201,26 @@ module GuestCta
       h
     end
 
-    # Shape sent to logged-out visitors (no admin-only fields).
+    # Shape sent to logged-out visitors (no admin-only fields). The reply's raw
+    # Markdown stays on the server; visitors only get the cooked HTML.
     def to_public_h
-      { id: id }.merge(content_attributes)
+      h = { id: id }.merge(content_attributes)
+      h.delete(:reply_raw) if reply?
+      h
     end
 
     private
+
+    def normalize_reply_name
+      self.reply_name = reply_name.to_s.strip
+    end
+
+    # Markdown -> sanitised HTML, exactly as a post would be cooked, so the
+    # reply supports the same links, images, quotes and formatting.
+    def cook_reply
+      return unless will_save_change_to_reply_raw? || reply_cooked.blank?
+      self.reply_cooked = reply_raw.present? ? PrettyText.cook(reply_raw) : ""
+    end
 
     # A cleared delay field in the editor means "show at once".
     def default_show_delay
@@ -168,6 +234,9 @@ module GuestCta
       if will_save_change_to_mobile_image_url?
         self.mobile_image_upload_id = upload_id_for(mobile_image_url)
       end
+      if will_save_change_to_reply_avatar_url?
+        self.reply_avatar_upload_id = upload_id_for(reply_avatar_url)
+      end
     end
 
     def upload_id_for(url)
@@ -177,9 +246,20 @@ module GuestCta
       nil
     end
 
+    # Images embedded in the reply's Markdown count too.
+    def reply_upload_ids
+      return [] unless reply? && reply_raw.present?
+      Upload.extract_upload_ids(reply_raw)
+    rescue StandardError
+      []
+    end
+
     def ensure_upload_references
       UploadReference.ensure_exist!(
-        upload_ids: [image_upload_id, mobile_image_upload_id].compact,
+        upload_ids:
+          ([image_upload_id, mobile_image_upload_id, reply_avatar_upload_id] + reply_upload_ids)
+            .compact
+            .uniq,
         target: self,
       )
     end

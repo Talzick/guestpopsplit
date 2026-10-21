@@ -1,6 +1,6 @@
 import { apiInitializer } from "discourse/lib/api";
 
-// Adds "Popup" and "Banner" tabs to the plugin's admin page. The dashboard
+// Adds "Popup", "Banner" and "Reply" tabs to the plugin's admin page. The dashboard
 // also has its own switcher, so nothing is lost if this API is unavailable.
 //
 // Core looks the nav up by plugin name in the admin sidebar, but by install
@@ -18,6 +18,10 @@ function navLinks() {
     {
       label: "guest_cta.admin.nav_banner",
       route: "adminPlugins.show.guest-cta-ab-banner",
+    },
+    {
+      label: "guest_cta.admin.nav_reply",
+      route: "adminPlugins.show.guest-cta-ab-reply",
     },
   ];
 }

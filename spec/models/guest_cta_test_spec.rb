@@ -158,3 +158,79 @@ RSpec.describe GuestCta::Significance do
     expect(result[:significant]).to eq(false)
   end
 end
+
+RSpec.describe "GuestCta reply placement" do
+  before { SiteSetting.guest_cta_enabled = true }
+
+  it "starts empty and counts as not configured" do
+    baseline = GuestCta::Variant.baseline("reply")
+    expect(baseline.reply_raw).to eq("")
+    expect(baseline.configured?).to eq(false)
+    expect { GuestCta::Test.create_with_control!("Too early", "reply") }.to raise_error(
+      Discourse::InvalidAccess,
+    )
+  end
+
+  it "cooks the message like a post and keeps the raw Markdown off the public payload" do
+    baseline = GuestCta::Variant.baseline("reply")
+    baseline.update!(
+      reply_name: "  Chris ",
+      reply_avatar_url: "https://example.com/chris.png",
+      reply_raw: "Try the **free reading** [here](https://example.com/go).",
+    )
+
+    expect(baseline.reply_name).to eq("Chris")
+    expect(baseline.reply_cooked).to include("<strong>free reading</strong>")
+    expect(baseline.reply_cooked).to include('href="https://example.com/go"')
+
+    public_h = GuestCta::LiveConfig.payload[:reply][:baseline]
+    expect(public_h[:reply_cooked]).to include("<strong>free reading</strong>")
+    expect(public_h[:reply_name]).to eq("Chris")
+    expect(public_h[:reply_avatar_url]).to eq("https://example.com/chris.png")
+    expect(public_h).not_to have_key(:reply_raw)
+  end
+
+  it "strips scripts from the message" do
+    baseline = GuestCta::Variant.baseline("reply")
+    baseline.update!(reply_name: "Chris", reply_raw: "Hi <script>alert(1)</script> there")
+    expect(baseline.reply_cooked).not_to include("<script")
+    expect(baseline.reply_cooked).to include("Hi")
+  end
+
+  it "requires a name and a message on tested variants but not on the baseline" do
+    baseline = GuestCta::Variant.baseline("reply")
+    expect(baseline).to be_valid
+
+    variant = GuestCta::Variant.new(placement: "reply", name: "x", reply_name: "", reply_raw: "")
+    expect(variant).not_to be_valid
+    expect(variant.errors[:reply_name]).to be_present
+    expect(variant.errors[:reply_raw]).to be_present
+  end
+
+  it "runs a reply test independently and copies the winner onto the baseline" do
+    GuestCta::Variant.baseline("reply").update!(reply_name: "Chris", reply_raw: "Original message")
+    test = GuestCta::Test.create_with_control!("Reply test", "reply")
+    expect(test.control.reply_cooked).to include("Original message")
+
+    variant =
+      test.variants.create!(
+        placement: "reply",
+        name: "B",
+        reply_name: "The TFC Team",
+        reply_raw: "Better message with a [link](/go)",
+      )
+    expect(variant.reply_cooked).to include('href="/go"')
+    test.start!
+
+    expect(GuestCta::LiveConfig.payload[:reply][:test][:id]).to eq(test.id)
+    expect(GuestCta::LiveConfig.payload[:popup][:test]).to be_nil
+    expect(GuestCta::LiveConfig.payload[:banner][:test]).to be_nil
+    expect(GuestCta::LiveConfig.live_variant_ids).to include(variant.id)
+
+    test.finish!(winner: variant)
+    baseline = GuestCta::Variant.baseline("reply")
+    expect(baseline.reply_name).to eq("The TFC Team")
+    expect(baseline.reply_raw).to eq("Better message with a [link](/go)")
+    expect(baseline.reply_cooked).to include('href="/go"')
+  end
+end

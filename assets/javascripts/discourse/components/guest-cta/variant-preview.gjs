@@ -1,13 +1,18 @@
 import Component from "@glimmer/component";
 import { htmlSafe } from "@ember/template";
+import { adReplyInnerHtml } from "../../lib/guest-cta/ad-reply-markup";
 import { bannerInnerHtml } from "../../lib/guest-cta/banner-markup";
 import { buttonStyle, modalInnerHtml } from "../../lib/guest-cta/popup-markup";
 
 // Renders a variant with the real markup and styles of its placement, inert
-// and scaled down. @placement is "popup" or "banner".
+// and scaled down. @placement is "popup", "banner" or "reply".
 export default class VariantPreview extends Component {
   get isBanner() {
     return this.args.placement === "banner";
+  }
+
+  get isReply() {
+    return this.args.placement === "reply";
   }
 
   get popupMarkup() {
@@ -24,8 +29,23 @@ export default class VariantPreview extends Component {
     return htmlSafe(bannerInnerHtml(this.args.variant));
   }
 
+  get replyMarkup() {
+    return htmlSafe(adReplyInnerHtml(this.args.variant));
+  }
+
   <template>
-    {{#if this.isBanner}}
+    {{#if this.isReply}}
+      <div
+        class="ad-reply-preview {{if @small 'ad-reply-preview--small'}}"
+        ...attributes
+      >
+        <div class="ad-reply ad-reply--preview">
+          <div class="ad-reply__article">
+            <div class="ad-reply__row">{{this.replyMarkup}}</div>
+          </div>
+        </div>
+      </div>
+    {{else if this.isBanner}}
       <div
         class="gcb-preview {{if @small 'gcb-preview--small'}}"
         ...attributes

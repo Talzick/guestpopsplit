@@ -1,6 +1,7 @@
 import getURL from "discourse/lib/get-url";
 
-// Shared by the popup and the banner: variant assignment and event pings.
+// Shared by every placement: variant assignment, impression observation and
+// event pings.
 
 export function readStorage(key) {
   try {
@@ -47,6 +48,28 @@ export function pickVariant(config, storageKey) {
     JSON.stringify({ test_id: test.id, variant_id: chosen.id })
   );
   return chosen;
+}
+
+// Calls `onVisible` once the element is at least half on screen. Returns a
+// cleanup function. Used by the in-topic placements (banner and reply), whose
+// impression only counts when the visitor actually scrolls to them.
+export function observeImpression(element, onVisible) {
+  if (typeof IntersectionObserver === "undefined") {
+    onVisible();
+    return () => {};
+  }
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        onVisible();
+        observer.disconnect();
+      }
+    },
+    { threshold: 0.5 }
+  );
+  observer.observe(element);
+  return () => observer.disconnect();
 }
 
 // Fire-and-forget counter ping. `keepalive` lets a click event survive the
