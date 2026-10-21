@@ -21,3 +21,4 @@ en:
       cannot_delete_control: "The control cannot be deleted."
       banner_not_configured: "Set the current banner's image, alt text and link before starting a banner test."
       reply_not_configured: "Set the current reply's name and message before starting a reply test."
+      override_needs_category: "every category-specific message needs at least one category"

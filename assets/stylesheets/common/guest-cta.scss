@@ -791,6 +791,49 @@ body.signup-page .gcb-banner {
       height: auto;
     }
   }
+
+  .ad-reply__button-row {
+    margin: 0.75em 0 0.25em;
+  }
+
+  .ad-reply__button {
+    display: inline-block;
+    text-decoration: none;
+
+    &:hover,
+    &:visited {
+      text-decoration: none;
+    }
+  }
+
+  // Like count row, laid out like a post's menu: count, then the heart.
+  .ad-reply__menu {
+    margin-top: 0.5em;
+  }
+
+  .ad-reply__controls {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .ad-reply__actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.15em;
+    color: var(--primary-medium);
+    padding: 0.3em 0.5em;
+  }
+
+  .ad-reply__like-count {
+    font-size: var(--font-down-1);
+    font-weight: 600;
+  }
+
+  .ad-reply__like .d-icon {
+    width: 1em;
+    height: 1em;
+    color: var(--primary-medium);
+  }
 }
 
 @media (max-width: 768px) {
@@ -870,6 +913,68 @@ body.signup-page .ad-reply {
 
 .guest-cta-field__error {
   color: var(--danger);
+}
+
+.guest-cta-field__note {
+  display: block;
+  color: var(--primary-medium);
+  margin: -0.5em 0 1em;
+}
+
+.guest-cta-variant-modal__preview-picker {
+  margin: 0 0 0.5em;
+  max-width: 100%;
+}
+
+// Category-specific messages inside the reply editor
+
+.guest-cta-overrides {
+  margin: 1.25em 0 1em;
+  padding-top: 1em;
+  border-top: 1px solid var(--primary-low);
+
+  > small {
+    display: block;
+    color: var(--primary-medium);
+    margin-bottom: 0.75em;
+  }
+}
+
+.guest-cta-overrides__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75em;
+  margin-bottom: 0.25em;
+}
+
+.guest-cta-overrides__title {
+  font-weight: 600;
+}
+
+.guest-cta-override {
+  border: 1px solid var(--primary-low);
+  border-radius: 8px;
+  padding: 0.9em 1em 0.25em;
+  margin-bottom: 0.75em;
+  background: var(--primary-very-low);
+
+  .category-selector {
+    width: 100%;
+  }
+}
+
+.guest-cta-override__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75em;
+  margin-bottom: 0.6em;
+}
+
+.guest-cta-override__label {
+  font-weight: 600;
+  color: var(--primary-high);
 }
 
 // Popup / banner / reply switcher at the top of the admin page

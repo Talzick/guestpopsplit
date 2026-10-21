@@ -233,4 +233,88 @@ RSpec.describe "GuestCta reply placement" do
     expect(baseline.reply_raw).to eq("Better message with a [link](/go)")
     expect(baseline.reply_cooked).to include('href="/go"')
   end
+
+  it "allows the button to be left off and shows it only when text and link are set" do
+    baseline = GuestCta::Variant.baseline("reply")
+    expect(baseline.button_url).to eq("")
+    baseline.update!(reply_name: "Chris", reply_raw: "Hi", button_text: " Get it ", button_url: " https://example.com/x ")
+    expect(baseline.button_text).to eq("Get it")
+    expect(baseline.button_url).to eq("https://example.com/x")
+    expect(GuestCta::LiveConfig.payload[:reply][:baseline][:button_url]).to eq("https://example.com/x")
+  end
+
+  it "validates the like count" do
+    variant = GuestCta::Variant.new(placement: "reply", name: "x", reply_name: "Chris", reply_raw: "Hi")
+    variant.reply_like_count = -1
+    expect(variant).not_to be_valid
+    variant.reply_like_count = 1_000_001
+    expect(variant).not_to be_valid
+    variant.reply_like_count = 37
+    expect(variant).to be_valid
+    variant.reply_like_count = nil
+    expect(variant).to be_valid
+    expect(variant.reply_like_count).to eq(0)
+  end
+
+  it "parses, cleans and cooks category overrides and hides their raw Markdown from visitors" do
+    baseline = GuestCta::Variant.baseline("reply")
+    baseline.update!(
+      reply_name: "Chris",
+      reply_raw: "Default message",
+      reply_category_overrides:
+        GuestCta::Variant.parse_overrides(
+          [
+            { category_ids: ["5", 5, "0", "abc"], reply_raw: "For **separation**", button_text: "Go", button_url: "/sep", junk: "x" },
+            { category_ids: [7], reply_raw: "", button_text: "", button_url: "/other" },
+          ].to_json,
+        ),
+    )
+
+    overrides = baseline.reply_category_overrides
+    expect(overrides.length).to eq(2)
+    expect(overrides[0]["category_ids"]).to eq([5])
+    expect(overrides[0]["reply_cooked"]).to include("<strong>separation</strong>")
+    expect(overrides[0]).not_to have_key("junk")
+    expect(overrides[1]["reply_cooked"]).to eq("")
+    expect(overrides[1]["button_url"]).to eq("/other")
+
+    public_overrides = GuestCta::LiveConfig.payload[:reply][:baseline][:reply_category_overrides]
+    expect(public_overrides[0]["reply_cooked"]).to include("<strong>separation</strong>")
+    expect(public_overrides[0]).not_to have_key("reply_raw")
+    expect(public_overrides[0]["category_ids"]).to eq([5])
+  end
+
+  it "rejects an override with no category and tolerates bad JSON" do
+    variant = GuestCta::Variant.new(placement: "reply", name: "x", reply_name: "Chris", reply_raw: "Hi")
+    variant.reply_category_overrides = [{ "category_ids" => [], "reply_raw" => "Orphan" }]
+    expect(variant).not_to be_valid
+    expect(variant.errors[:reply_category_overrides]).to be_present
+
+    expect(GuestCta::Variant.parse_overrides("not json")).to eq([])
+    expect(GuestCta::Variant.parse_overrides(nil)).to eq([])
+  end
+
+  it "copies overrides, button and like count onto the baseline with the winner" do
+    GuestCta::Variant.baseline("reply").update!(reply_name: "Chris", reply_raw: "Original")
+    test = GuestCta::Test.create_with_control!("Reply extras", "reply")
+    variant =
+      test.variants.create!(
+        placement: "reply",
+        name: "B",
+        reply_name: "Chris",
+        reply_raw: "New",
+        reply_like_count: 12,
+        button_text: "Read more",
+        button_url: "/more",
+        reply_category_overrides: [{ "category_ids" => [3], "reply_raw" => "Cat three" }],
+      )
+    test.start!
+    test.finish!(winner: variant)
+
+    baseline = GuestCta::Variant.baseline("reply")
+    expect(baseline.reply_like_count).to eq(12)
+    expect(baseline.button_text).to eq("Read more")
+    expect(baseline.reply_category_overrides.first["category_ids"]).to eq([3])
+    expect(baseline.reply_category_overrides.first["reply_cooked"]).to include("Cat three")
+  end
 end

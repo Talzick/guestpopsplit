@@ -22,8 +22,12 @@ apart from real posts. What is new:
   once). The delay is part of the variant, so it can be split tested like
   anything else. A banner variant has a desktop image, an optional mobile
   image, alt text and a link. A reply variant has the name it appears under,
-  a profile photo (an image URL or upload) and the message, which is cooked
-  on the server with the same Markdown engine as posts.
+  a profile photo (an image URL or upload), the message, which is cooked on
+  the server with the same Markdown engine as posts, an optional button under
+  the message, a like count shown with a heart (0 hides it), and optional
+  category-specific messages: by default the message shows in every category,
+  and each override gives chosen categories (a parent covers its
+  subcategories) their own message and/or button instead.
 - **Tests.** A test starts with a frozen copy of the current popup as the
   control, plus any variants you add. Visitors are split evenly at random, and
   each visitor keeps seeing the version they were first shown.
@@ -112,7 +116,9 @@ popup, one for the banner, one for the reply).
   any other reply, and its Markdown is cooked with `PrettyText.cook`, the same
   sanitiser posts go through. The raw Markdown never leaves the server;
   visitors only receive the cooked HTML. The name is plain text and links
-  nowhere; only links inside the message count as clicks.
+  nowhere; links inside the message and the button count as clicks, the like
+  count does not. The browser picks the category-specific message from the
+  topic's category or its parent, falling back to the default.
 - Variant assignment and the popup frequency cap live in `localStorage`
   (`guest_cta_assignment`, `guest_cta_banner_assignment`,
   `guest_cta_reply_assignment` and `guest_cta_gate_last_shown`, the latter

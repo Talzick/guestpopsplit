@@ -5,7 +5,9 @@ import { bannerInnerHtml } from "../../lib/guest-cta/banner-markup";
 import { buttonStyle, modalInnerHtml } from "../../lib/guest-cta/popup-markup";
 
 // Renders a variant with the real markup and styles of its placement, inert
-// and scaled down. @placement is "popup", "banner" or "reply".
+// and scaled down. @placement is "popup", "banner" or "reply". For the reply,
+// @message (see resolveReplyMessage) picks which message to show; it defaults
+// to the variant's default message.
 export default class VariantPreview extends Component {
   get isBanner() {
     return this.args.placement === "banner";
@@ -30,7 +32,11 @@ export default class VariantPreview extends Component {
   }
 
   get replyMarkup() {
-    return htmlSafe(adReplyInnerHtml(this.args.variant));
+    return htmlSafe(
+      adReplyInnerHtml(this.args.variant, this.args.message || null, {
+        preview: true,
+      })
+    );
   }
 
   <template>

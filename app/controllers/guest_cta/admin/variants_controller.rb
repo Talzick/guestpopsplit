@@ -4,6 +4,7 @@ module GuestCta
   module Admin
     class VariantsController < ::Admin::AdminController
       requires_plugin GuestCta::PLUGIN_NAME
+      include GuestCta::VariantParams
 
       def create
         test = GuestCta::Test.find(params[:test_id])
@@ -47,12 +48,6 @@ module GuestCta
 
         variant.destroy!
         render json: success_json
-      end
-
-      private
-
-      def variant_params(placement)
-        params.require(:variant).permit(:name, *GuestCta::Variant.editable_fields_for(placement))
       end
     end
   end

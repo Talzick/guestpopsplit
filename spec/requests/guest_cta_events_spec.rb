@@ -181,4 +181,43 @@ RSpec.describe "Guest CTA admin dashboard" do
     expect(json["reply_cooked"]).not_to include("<script")
     expect(json["open_in_new_tab"]).to eq(true)
   end
+
+  it "accepts the reply's overrides as a JSON string and clears them when an empty list is sent" do
+    put "/guest-cta/admin/baseline.json",
+        params: {
+          placement: "reply",
+          variant: {
+            reply_name: "TFC Team",
+            reply_raw: "Default",
+            reply_like_count: "8",
+            reply_category_overrides: [
+              { category_ids: [4], reply_raw: "Just for category four", button_text: "Go", button_url: "/four" },
+            ].to_json,
+          },
+        }
+    expect(response.status).to eq(200)
+    json = response.parsed_body
+    expect(json["reply_like_count"]).to eq(8)
+    expect(json["reply_category_overrides"].length).to eq(1)
+    expect(json["reply_category_overrides"][0]["category_ids"]).to eq([4])
+    expect(json["reply_category_overrides"][0]["reply_cooked"]).to include("Just for category four")
+
+    put "/guest-cta/admin/baseline.json",
+        params: { placement: "reply", variant: { reply_category_overrides: "[]" } }
+    expect(response.status).to eq(200)
+    expect(response.parsed_body["reply_category_overrides"]).to eq([])
+  end
+
+  it "rejects an override without a category" do
+    put "/guest-cta/admin/baseline.json",
+        params: {
+          placement: "reply",
+          variant: {
+            reply_name: "TFC Team",
+            reply_raw: "Default",
+            reply_category_overrides: [{ category_ids: [], reply_raw: "Nowhere" }].to_json,
+          },
+        }
+    expect(response.status).to eq(422)
+  end
 end

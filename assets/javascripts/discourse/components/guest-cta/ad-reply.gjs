@@ -4,7 +4,10 @@ import { action } from "@ember/object";
 import { service } from "@ember/service";
 import { htmlSafe } from "@ember/template";
 import { modifier } from "ember-modifier";
-import { adReplyInnerHtml } from "../../lib/guest-cta/ad-reply-markup";
+import {
+  adReplyInnerHtml,
+  resolveReplyMessage,
+} from "../../lib/guest-cta/ad-reply-markup";
 import {
   observeImpression,
   pickVariant,
@@ -39,9 +42,29 @@ export default class AdReply extends Component {
       this.siteSettings.guest_cta_reply_enabled &&
       !this.currentUser &&
       this.post?.post_number === 1 &&
-      !!this.variant?.reply_cooked &&
-      !!this.variant?.reply_name
+      !!this.variant?.reply_name &&
+      !!this.message.reply_cooked
     );
+  }
+
+  // The topic's category and its parent, so a message set for a parent
+  // category also applies to topics in its subcategories.
+  get categoryIds() {
+    const categoryId = this.post?.topic?.category_id ?? this.post?.category_id;
+    if (!categoryId) {
+      return [null, null];
+    }
+    const category = (this.site.categories || []).find(
+      (c) => c.id === categoryId
+    );
+    return [categoryId, category?.parent_category_id ?? null];
+  }
+
+  get message() {
+    if (!this.variant) {
+      return { reply_cooked: "" };
+    }
+    return resolveReplyMessage(this.variant, ...this.categoryIds);
   }
 
   get variant() {
@@ -52,14 +75,15 @@ export default class AdReply extends Component {
   }
 
   get markup() {
-    return htmlSafe(adReplyInnerHtml(this.variant));
+    return htmlSafe(adReplyInnerHtml(this.variant, this.message));
   }
 
   // Counts an impression once the reply is actually on screen, once per topic
-  // per page load, and applies the new-tab option to the message's links.
+  // per page load, and applies the new-tab option to the message's links and
+  // button.
   setup = modifier((element) => {
     if (this.variant.open_in_new_tab) {
-      element.querySelectorAll(".ad-reply__cooked a[href]").forEach((link) => {
+      element.querySelectorAll(".ad-reply__contents a[href]").forEach((link) => {
         link.target = "_blank";
         link.rel = "noopener";
       });
@@ -79,10 +103,11 @@ export default class AdReply extends Component {
     });
   });
 
-  // Any link inside the message counts as a click; the author line does not.
+  // Any link inside the message, and the button, counts as a click; the
+  // author line and the like count do not.
   @action
   onClick(event) {
-    if (event.target.closest(".ad-reply__cooked a[href]")) {
+    if (event.target.closest(".ad-reply__contents a[href]")) {
       track(this.variant.id, "click");
     }
   }
